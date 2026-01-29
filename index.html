@@ -336,7 +336,9 @@
                 <div class="info-text" style="margin-top: 1rem;">
                     💡 Click y arrastra para dibujar<br>
                     🎨 Experimenta con reacciones<br>
-                    💥 Portal: Marco de obsidiana 4×3!
+                    🔥 Portal: Marco obsidiana + fuego dentro!<br>
+                    🧪 Nueva: Sodio + agua = EXPLOSIÓN<br>
+                    ⚗️ Combina materiales y descubre!
                 </div>
             </div>
         </aside>
@@ -349,18 +351,17 @@
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        const pixelSize = 2; // Tamaño de cada partícula en píxeles de pantalla
-        const width = 400; // Ancho en partículas (800px / 2)
-        const height = 300; // Alto en partículas (600px / 2)
+        const pixelSize = 2;
+        const width = 400;
+        const height = 300;
         
-        // Grid de partículas
         let grid = Array(height).fill(null).map(() => Array(width).fill(null));
         let selectedMaterial = 'sand';
         let brushSize = 5;
         let isDrawing = false;
         let isPaused = false;
         
-        // Definición de materiales
+        // Definición de materiales (AMPLIADA)
         const MATERIALS = {
             sand: { name: 'Arena', color: '#f4a460', density: 1.5, type: 'powder' },
             water: { name: 'Agua', color: '#1e90ff', density: 1, type: 'liquid' },
@@ -395,7 +396,22 @@
             brick: { name: 'Ladrillo', color: '#b22222', density: 2.0, type: 'solid', resistant: true },
             clay: { name: 'Arcilla', color: '#b8860b', density: 1.7, type: 'powder' },
             portal: { name: 'Portal', color: '#8b00ff', density: 0, type: 'special' },
-            mercury: { name: 'Mercurio', color: '#c0c0c0', density: 13.5, type: 'liquid', toxic: true }
+            mercury: { name: 'Mercurio', color: '#c0c0c0', density: 13.5, type: 'liquid', toxic: true },
+            sodium: { name: 'Sodio', color: '#ffd700', density: 0.97, type: 'solid', reactive: true },
+            chlorine: { name: 'Cloro', color: '#ccff00', density: 0.003, type: 'gas', toxic: true, life: 180 },
+            hydrogen: { name: 'Hidrógeno', color: '#ffe6e6', density: 0.00009, type: 'gas', explosive: true, life: 200 },
+            oxygen: { name: 'Oxígeno', color: '#e6f7ff', density: 0.0014, type: 'gas', life: 250 },
+            magma: { name: 'Magma', color: '#ff6600', density: 3, type: 'liquid', hot: true },
+            copper: { name: 'Cobre', color: '#b87333', density: 8.96, type: 'solid', conductive: true },
+            gold: { name: 'Oro', color: '#ffd700', density: 19.3, type: 'solid' },
+            silver: { name: 'Plata', color: '#c0c0c0', density: 10.5, type: 'solid', conductive: true },
+            phosphorus: { name: 'Fósforo', color: '#ffffe0', density: 1.82, type: 'solid', flammable: true },
+            sulfur: { name: 'Azufre', color: '#ffff00', density: 2.07, type: 'powder', flammable: true },
+            carbon: { name: 'Carbono', color: '#3c3c3c', density: 2.26, type: 'powder' },
+            nitrogen: { name: 'Nitrógeno', color: '#add8e6', density: 0.00125, type: 'gas', life: 300 },
+            helium: { name: 'Helio', color: '#ffc0cb', density: 0.00018, type: 'gas', life: 400 },
+            neon: { name: 'Neón', color: '#ff6347', density: 0.0009, type: 'gas', life: 350 },
+            ammonia: { name: 'Amoníaco', color: '#e0ffff', density: 0.00073, type: 'gas', toxic: true, life: 180 }
         };
         
         // Inicializar interfaz
@@ -435,14 +451,13 @@
             };
         }
         
-        // Funciones de movimiento básicas
+        // Funciones de movimiento
         function movePowder(x, y) {
             const particle = grid[y][x];
             if (!particle) return false;
             
             const speed = Math.min(Math.ceil(particle.density / 1.5), 3);
             
-            // Intentar caer rápido
             for (let i = 1; i <= speed; i++) {
                 if (y + i < height && !grid[y + i][x]) {
                     grid[y + i][x] = particle;
@@ -451,7 +466,6 @@
                 }
             }
             
-            // Caer diagonal
             const dir = Math.random() < 0.5 ? -1 : 1;
             if (y < height - 1) {
                 if (x + dir >= 0 && x + dir < width && !grid[y + 1][x + dir]) {
@@ -472,14 +486,12 @@
             const particle = grid[y][x];
             if (!particle) return false;
             
-            // Caer
             if (y < height - 1 && !grid[y + 1][x]) {
                 grid[y + 1][x] = particle;
                 grid[y][x] = null;
                 return true;
             }
             
-            // Moverse horizontalmente
             const dir = Math.random() < 0.5 ? -1 : 1;
             for (let i = 1; i <= 3; i++) {
                 if (x + dir * i >= 0 && x + dir * i < width && !grid[y][x + dir * i]) {
@@ -507,7 +519,6 @@
             return false;
         }
         
-        // Función de explosión OPTIMIZADA
         function explode(x, y, radius) {
             for (let dy = -radius; dy <= radius; dy += 2) {
                 for (let dx = -radius; dx <= radius; dx += 2) {
@@ -530,7 +541,46 @@
             }
         }
         
-        // Sistema de actualización por tipo
+        // NUEVA: Propagación de calor en 3D
+        function propagateHeat(x, y, heatType, radius, probability, convertTo) {
+            const queue = [[x, y, 0]];
+            const visited = new Set();
+            visited.add(`${x},${y}`);
+            
+            while (queue.length > 0) {
+                const [cx, cy, depth] = queue.shift();
+                if (depth >= radius) continue;
+                
+                for (let dy = -1; dy <= 1; dy++) {
+                    for (let dx = -1; dx <= 1; dx++) {
+                        if (dx === 0 && dy === 0) continue;
+                        const nx = cx + dx;
+                        const ny = cy + dy;
+                        const key = `${nx},${ny}`;
+                        
+                        if (nx >= 0 && nx < width && ny >= 0 && ny < height && 
+                            !visited.has(key)) {
+                            visited.add(key);
+                            const neighbor = grid[ny][nx];
+                            
+                            if (neighbor && neighbor.type === heatType) {
+                                const chance = probability / (depth + 1);
+                                if (Math.random() < chance) {
+                                    if (convertTo) {
+                                        grid[ny][nx] = { type: convertTo };
+                                    } else {
+                                        grid[ny][nx].heating = true;
+                                    }
+                                    queue.push([nx, ny, depth + 1]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Sistema de actualización
         function updateParticle(x, y) {
             const particle = grid[y][x];
             if (!particle) return;
@@ -539,12 +589,14 @@
             const mat = MATERIALS[type];
             if (!mat) return;
             
-            // Vida de partículas temporales
+            // Vida
             if (particle.life !== undefined) {
                 particle.life--;
                 if (particle.life <= 0) {
                     if (type === 'fire' || type === 'plasma') {
                         grid[y][x] = Math.random() < 0.3 ? { type: 'smoke', life: 100 } : null;
+                    } else if (type === 'chlorine') {
+                        grid[y][x] = null;
                     } else {
                         grid[y][x] = null;
                     }
@@ -552,16 +604,17 @@
                 }
             }
             
-            // Movimiento básico por tipo
+            // Movimiento
             if (mat.type === 'powder') {
                 movePowder(x, y);
             } else if (mat.type === 'liquid') {
                 moveLiquid(x, y);
             } else if (mat.type === 'gas') {
-                const speed = type === 'methane' ? 0.95 : (type === 'steam' ? 0.8 : 0.9);
+                const speed = type === 'methane' ? 0.95 : 
+                             type === 'hydrogen' ? 0.98 : 
+                             type === 'helium' ? 0.99 : 0.8;
                 moveGas(x, y, speed);
             } else if (type === 'neutron') {
-                // Neutrones se mueven rápido
                 const vx = particle.vx || 1;
                 const vy = particle.vy || 0;
                 const nx = x + vx;
@@ -575,18 +628,16 @@
                 return;
             }
             
-            // Reacciones específicas
             checkReactions(x, y);
         }
         
-        // Sistema de reacciones OPTIMIZADO
+        // SISTEMA DE REACCIONES MEJORADO Y AMPLIADO
         function checkReactions(x, y) {
             const particle = grid[y][x];
             if (!particle) return;
             
             const type = particle.type;
             
-            // Revisar vecinos
             for (let dy = -1; dy <= 1; dy++) {
                 for (let dx = -1; dx <= 1; dx++) {
                     if (dx === 0 && dy === 0) continue;
@@ -597,13 +648,66 @@
                     const neighbor = grid[ny][nx];
                     if (!neighbor) continue;
                     
-                    // REACCIONES PRINCIPALES
+                    // ========== REACCIONES VIOLENTAS ==========
                     
-                    // Lava + Agua = Piedra + Vapor
+                    // Sodio + Agua = GRAN EXPLOSIÓN + Hidrógeno
+                    if ((type === 'sodium' && neighbor.type === 'water') ||
+                        (type === 'water' && neighbor.type === 'sodium')) {
+                        explode(x, y, 18);
+                        // Crear hidrógeno
+                        for (let i = 0; i < 12; i++) {
+                            const angle = (Math.PI * 2 * i) / 12;
+                            const fx = Math.round(x + Math.cos(angle) * 8);
+                            const fy = Math.round(y + Math.sin(angle) * 8);
+                            if (fx >= 0 && fx < width && fy >= 0 && fy < height && !grid[fy][fx]) {
+                                grid[fy][fx] = { type: 'hydrogen', life: 150 };
+                            }
+                        }
+                        return;
+                    }
+                    
+                    // Hidrógeno + Oxígeno + Fuego = Agua + Explosión
+                    if ((type === 'hydrogen' && neighbor.type === 'oxygen') ||
+                        (type === 'oxygen' && neighbor.type === 'hydrogen')) {
+                        // Buscar fuego cercano
+                        let hasFire = false;
+                        for (let sy = -2; sy <= 2; sy++) {
+                            for (let sx = -2; sx <= 2; sx++) {
+                                const cy = y + sy;
+                                const cx = x + sx;
+                                if (cx >= 0 && cx < width && cy >= 0 && cy < height) {
+                                    const check = grid[cy][cx];
+                                    if (check && (check.type === 'fire' || check.type === 'plasma')) {
+                                        hasFire = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (hasFire && Math.random() < 0.15) {
+                            explode(x, y, 12);
+                            grid[y][x] = { type: 'water' };
+                            grid[ny][nx] = { type: 'steam', life: 100 };
+                            return;
+                        }
+                    }
+                    
+                    // Fósforo + Oxígeno = Fuego intenso
+                    if ((type === 'phosphorus' && neighbor.type === 'oxygen') ||
+                        (type === 'oxygen' && neighbor.type === 'phosphorus')) {
+                        if (Math.random() < 0.1) {
+                            grid[y][x] = { type: 'fire', life: 120 };
+                            grid[ny][nx] = { type: 'fire', life: 120 };
+                            return;
+                        }
+                    }
+                    
+                    // ========== LAVA Y CALOR ==========
+                    
+                    // Lava + Agua = Piedra + Vapor (con propagación)
                     if (type === 'lava' && neighbor.type === 'water') {
                         grid[y][x] = { type: 'stone' };
                         grid[ny][nx] = { type: 'steam', life: 100 };
-                        // Efecto visual
                         for (let i = 0; i < 6; i++) {
                             const angle = (Math.PI * 2 * i) / 6;
                             const fx = Math.round(x + Math.cos(angle) * 2);
@@ -615,10 +719,35 @@
                         return;
                     }
                     
-                    // Fuego/Lava + Combustibles
-                    if ((type === 'fire' || type === 'lava' || type === 'plasma') && Math.random() < 0.2) {
+                    // Magma más caliente
+                    if (type === 'magma' && neighbor.type === 'water') {
+                        grid[y][x] = { type: 'lava' };
+                        grid[ny][nx] = { type: 'steam', life: 120 };
+                        explode(x, y, 8);
+                        return;
+                    }
+                    
+                    // ========== COMBUSTIÓN MEJORADA ==========
+                    
+                    if ((type === 'fire' || type === 'lava' || type === 'plasma' || type === 'magma') && 
+                        Math.random() < 0.2) {
                         if (neighbor.type === 'oil' || neighbor.type === 'petroleum') {
-                            grid[ny][nx] = { type: 'fire', life: 100 };
+                            grid[ny][nx] = { type: 'fire', life: 120 };
+                            // Propagar
+                            if (Math.random() < 0.3) {
+                                for (let i = 0; i < 4; i++) {
+                                    const dirs = [[0,-1],[0,1],[-1,0],[1,0]];
+                                    const [ddx, ddy] = dirs[i];
+                                    const fx = nx + ddx;
+                                    const fy = ny + ddy;
+                                    if (fx >= 0 && fx < width && fy >= 0 && fy < height) {
+                                        const check = grid[fy][fx];
+                                        if (check && (check.type === 'oil' || check.type === 'petroleum')) {
+                                            grid[fy][fx] = { type: 'fire', life: 100 };
+                                        }
+                                    }
+                                }
+                            }
                         } else if (neighbor.type === 'wood' && !neighbor.burning) {
                             neighbor.burning = true;
                             neighbor.burnTime = 150;
@@ -633,10 +762,17 @@
                         } else if (neighbor.type === 'coal' && !neighbor.burning) {
                             neighbor.burning = true;
                             neighbor.burnTime = 300;
+                        } else if (neighbor.type === 'sulfur') {
+                            grid[ny][nx] = { type: 'fire', life: 80 };
+                            // Propagar a azufre cercano
+                            propagateHeat(nx, ny, 'sulfur', 3, 0.4, 'fire');
+                        } else if (neighbor.type === 'phosphorus') {
+                            grid[ny][nx] = { type: 'fire', life: 100 };
                         }
                     }
                     
-                    // C4/TNT + Fuego/Lava/Electricidad
+                    // ========== EXPLOSIVOS ==========
+                    
                     if ((type === 'explosive' || type === 'tnt') && 
                         (neighbor.type === 'fire' || neighbor.type === 'lava' || 
                          neighbor.type === 'electricity' || neighbor.type === 'plasma')) {
@@ -644,51 +780,40 @@
                         return;
                     }
                     
-                    // Hielo enfría
+                    // ========== HIELO Y CONGELACIÓN ==========
+                    
                     if (type === 'ice' && Math.random() < 0.02) {
                         if (neighbor.type === 'water') {
                             grid[ny][nx] = { type: 'ice' };
-                            // Propagar congelación
-                            for (let dy2 = -1; dy2 <= 1; dy2++) {
-                                for (let dx2 = -1; dx2 <= 1; dx2++) {
-                                    const nx2 = nx + dx2;
-                                    const ny2 = ny + dy2;
-                                    if (nx2 >= 0 && nx2 < width && ny2 >= 0 && ny2 < height) {
-                                        const n2 = grid[ny2][nx2];
-                                        if (n2 && n2.type === 'water' && Math.random() < 0.2) {
-                                            grid[ny2][nx2] = { type: 'ice' };
-                                        }
-                                    }
-                                }
-                            }
+                            // Propagación de congelación mejorada
+                            propagateHeat(nx, ny, 'water', 4, 0.3, 'ice');
                         } else if (neighbor.type === 'fire' || neighbor.type === 'lava') {
                             grid[ny][nx] = { type: 'water' };
                         }
                     }
                     
-                    // Semilla + Agua = Planta
+                    // ========== PLANTAS Y SEMILLAS ==========
+                    
                     if (type === 'seed' && neighbor.type === 'water' && Math.random() < 0.05) {
                         grid[y][x] = { type: 'plant', growth: 0 };
-                        // Efecto visual
-                        if (ny > 0 && !grid[y-1][x]) {
+                        if (y > 0 && !grid[y-1][x]) {
                             grid[y-1][x] = { type: 'plant', growth: 0 };
                         }
                         return;
                     }
                     
-                    // Semilla + Tierra mojada = Planta rápido
                     if (type === 'seed' && neighbor.type === 'dirt' && neighbor.wet && Math.random() < 0.08) {
                         grid[y][x] = { type: 'plant', growth: 0 };
                         return;
                     }
                     
-                    // Tierra absorbe agua (propaga absorción)
+                    // ========== TIERRA ==========
+                    
                     if (type === 'dirt' && neighbor.type === 'water' && !particle.wet && Math.random() < 0.1) {
                         particle.wet = true;
                         particle.color = '#3d2817';
                         grid[ny][nx] = null;
-                        
-                        // Propagar humedad a tierra cercana
+                        propagateHeat(x, y, 'dirt', 5, 0.4, null);
                         for (let dy2 = -1; dy2 <= 1; dy2++) {
                             for (let dx2 = -1; dx2 <= 1; dx2++) {
                                 const nx2 = x + dx2;
@@ -704,69 +829,38 @@
                         }
                     }
                     
-                    // Polvo hormigón + Agua = Hormigón (propaga en profundidad)
+                    // ========== HORMIGÓN ==========
+                    
                     if (type === 'concrete_powder' && neighbor.type === 'water' && Math.random() < 0.3) {
                         grid[y][x] = { type: 'concrete' };
                         if (Math.random() < 0.5) grid[ny][nx] = null;
-                        
-                        // Propagar endurecimiento hacia abajo
-                        for (let depth = 1; depth <= 5; depth++) {
-                            if (y + depth >= height) break;
-                            const below = grid[y + depth][x];
-                            if (below && below.type === 'concrete_powder' && Math.random() < 0.4) {
-                                grid[y + depth][x] = { type: 'concrete' };
-                            } else {
-                                break;
-                            }
-                        }
+                        // MEJORADO: Propagación completa hacia abajo y lados
+                        propagateHeat(x, y, 'concrete_powder', 8, 0.5, 'concrete');
                         return;
                     }
                     
-                    // Arcilla + Lava/Fuego = Ladrillo (propaga calor)
-                    if (type === 'clay' && (neighbor.type === 'lava' || neighbor.type === 'fire' || neighbor.type === 'plasma') && 
-                        Math.random() < 0.08) {
+                    // ========== ARCILLA -> LADRILLO (MEJORADO) ==========
+                    
+                    if (type === 'clay' && (neighbor.type === 'lava' || neighbor.type === 'fire' || 
+                        neighbor.type === 'plasma' || neighbor.type === 'magma') && Math.random() < 0.08) {
                         grid[y][x] = { type: 'brick' };
-                        
-                        // Propagar cocción a arcilla cercana
-                        for (let dy2 = -2; dy2 <= 2; dy2++) {
-                            for (let dx2 = -2; dx2 <= 2; dx2++) {
-                                const nx2 = x + dx2;
-                                const ny2 = y + dy2;
-                                if (nx2 >= 0 && nx2 < width && ny2 >= 0 && ny2 < height) {
-                                    const neighbor2 = grid[ny2][nx2];
-                                    const dist = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-                                    if (neighbor2 && neighbor2.type === 'clay' && 
-                                        Math.random() < (0.3 / (dist + 1))) {
-                                        grid[ny2][nx2] = { type: 'brick' };
-                                    }
-                                }
-                            }
-                        }
+                        // MEJORADO: Propagación completa de cocción
+                        propagateHeat(x, y, 'clay', 15, 0.6, 'brick');
                         return;
                     }
                     
-                    // Lava + Arena = Vidrio (propaga fusión)
+                    // ========== ARENA -> VIDRIO ==========
+                    
                     if (type === 'lava' && neighbor.type === 'sand' && Math.random() < 0.08) {
                         grid[ny][nx] = { type: 'glass' };
-                        // Propagar fusión de arena cercana
-                        for (let dy2 = -1; dy2 <= 1; dy2++) {
-                            for (let dx2 = -1; dx2 <= 1; dx2++) {
-                                const nx2 = nx + dx2;
-                                const ny2 = ny + dy2;
-                                if (nx2 >= 0 && nx2 < width && ny2 >= 0 && ny2 < height) {
-                                    const n2 = grid[ny2][nx2];
-                                    if (n2 && n2.type === 'sand' && Math.random() < 0.3) {
-                                        grid[ny2][nx2] = { type: 'glass' };
-                                    }
-                                }
-                            }
-                        }
+                        propagateHeat(nx, ny, 'sand', 4, 0.4, 'glass');
                     }
                     
-                    // Metal + Agua = Óxido (muy lento, propaga oxidación)
+                    // ========== METAL Y ÓXIDO ==========
+                    
                     if (type === 'metal' && neighbor.type === 'water' && Math.random() < 0.002) {
                         grid[y][x] = { type: 'sand', color: '#b7410e' };
-                        // Propagar oxidación a metales cercanos
+                        propagateHeat(x, y, 'metal', 3, 0.15, null);
                         for (let dy2 = -1; dy2 <= 1; dy2++) {
                             for (let dx2 = -1; dx2 <= 1; dx2++) {
                                 const nx2 = x + dx2;
@@ -781,15 +875,54 @@
                         }
                     }
                     
-                    // Mercurio + Metal
+                    // ========== ÁCIDO ==========
+                    
+                    if (type === 'acid' && Math.random() < 0.15) {
+                        if (neighbor.type === 'metal' || neighbor.type === 'copper' || 
+                            neighbor.type === 'silver') {
+                            grid[ny][nx] = { type: 'smoke', life: 80 };
+                            if (Math.random() < 0.3) {
+                                grid[y][x] = null; // El ácido se consume
+                            }
+                        } else if (neighbor.type === 'stone' || neighbor.type === 'concrete') {
+                            if (Math.random() < 0.05) {
+                                grid[ny][nx] = { type: 'sand', color: '#888888' };
+                            }
+                        } else if (neighbor.type === 'wood' || neighbor.type === 'plant') {
+                            grid[ny][nx] = { type: 'smoke', life: 60 };
+                        }
+                    }
+                    
+                    // ========== MERCURIO ==========
+                    
                     if (type === 'mercury' && neighbor.type === 'metal' && Math.random() < 0.03) {
                         grid[ny][nx] = { type: 'mercury' };
                     }
                     
-                    // Uranio + Neutrón = EXPLOSIÓN
+                    if (type === 'mercury' && (neighbor.type === 'gold' || neighbor.type === 'silver') && 
+                        Math.random() < 0.01) {
+                        // Amalgama
+                        grid[ny][nx] = { type: 'mercury', color: '#d4af37' };
+                    }
+                    
+                    // ========== CLORO ==========
+                    
+                    if (type === 'chlorine' && Math.random() < 0.1) {
+                        if (neighbor.type === 'sodium') {
+                            grid[y][x] = { type: 'salt' };
+                            grid[ny][nx] = { type: 'salt' };
+                            return;
+                        } else if (neighbor.type === 'hydrogen') {
+                            grid[y][x] = { type: 'acid' };
+                            grid[ny][nx] = null;
+                            return;
+                        }
+                    }
+                    
+                    // ========== URANIO ==========
+                    
                     if (type === 'uranium' && neighbor.type === 'neutron' && Math.random() < 0.5) {
                         explode(x, y, 20);
-                        // Crear más neutrones
                         for (let i = 0; i < 8; i++) {
                             const angle = (Math.PI * 2 * i) / 8;
                             const fx = Math.round(x + Math.cos(angle) * 5);
@@ -803,20 +936,39 @@
                         return;
                     }
                     
-                    // Electricidad + Metal
+                    // ========== ELECTRICIDAD ==========
+                    
                     if (type === 'electricity' && neighbor.conductive && Math.random() < 0.4) {
                         grid[ny][nx] = { type: 'electricity', life: 15 };
                     }
                     
-                    // Portal teleport (OPTIMIZADO - solo 1 vez cada 10 frames)
+                    if (type === 'electricity' && neighbor.type === 'water' && Math.random() < 0.2) {
+                        grid[ny][nx] = { type: 'electricity', life: 10 };
+                    }
+                    
+                    // ========== AMONÍACO ==========
+                    
+                    if (type === 'ammonia' && neighbor.type === 'fire' && Math.random() < 0.15) {
+                        explode(x, y, 10);
+                        for (let i = 0; i < 6; i++) {
+                            const angle = (Math.PI * 2 * i) / 6;
+                            const fx = Math.round(x + Math.cos(angle) * 4);
+                            const fy = Math.round(y + Math.sin(angle) * 4);
+                            if (fx >= 0 && fx < width && fy >= 0 && fy < height) {
+                                grid[fy][fx] = { type: 'nitrogen', life: 150 };
+                            }
+                        }
+                        return;
+                    }
+                    
+                    // ========== PORTALES MEJORADOS ==========
+                    
                     if (type === 'portal' && Math.random() < 0.05 && 
                         neighbor.type !== 'portal' && neighbor.type !== 'obsidian') {
-                        // Buscar otro portal (limitado a búsqueda cercana)
                         for (let py = Math.max(0, y - 100); py < Math.min(height, y + 100); py += 5) {
                             for (let px = Math.max(0, x - 100); px < Math.min(width, x + 100); px += 5) {
                                 const p = grid[py][px];
                                 if (p && p.type === 'portal' && (px !== x || py !== y)) {
-                                    // Teleport
                                     for (let ty = -2; ty <= 2; ty++) {
                                         for (let tx = -2; tx <= 2; tx++) {
                                             const tpx = px + tx;
@@ -835,9 +987,8 @@
                 }
             }
             
-            // Comportamientos especiales
+            // ========== COMPORTAMIENTOS ESPECIALES ==========
             
-            // Madera ardiendo
             if (type === 'wood' && particle.burning) {
                 particle.burnTime = (particle.burnTime || 150) - 1;
                 if (particle.burnTime <= 0) {
@@ -847,7 +998,6 @@
                 }
             }
             
-            // Carbón ardiendo
             if (type === 'coal' && particle.burning) {
                 particle.burnTime = (particle.burnTime || 300) - 1;
                 if (particle.burnTime <= 0) {
@@ -857,7 +1007,6 @@
                 }
             }
             
-            // Plantas crecen
             if (type === 'plant' && Math.random() < 0.015) {
                 particle.growth = (particle.growth || 0) + 1;
                 if (particle.growth < 5) {
@@ -871,7 +1020,6 @@
                 }
             }
             
-            // Uranio emite neutrones
             if (type === 'uranium' && Math.random() < 0.01) {
                 const angle = Math.random() * Math.PI * 2;
                 const nx = Math.round(x + Math.cos(angle));
@@ -883,62 +1031,61 @@
                 }
             }
             
-            // Obsidiana detecta portales (optimizado - cada 30 frames aprox)
-            if (type === 'obsidian' && Math.random() < 0.003) {
+            // MEJORADO: Detección de portales con fuego
+            if (type === 'obsidian' && Math.random() < 0.02) {
                 checkPortalFrame(x, y);
             }
         }
         
-        // Detector de marco de portal
+        // MEJORADO: Detector de portales que se activa con FUEGO
         function checkPortalFrame(x, y) {
-            // Verificar si es esquina superior izquierda de un marco
-            let valid = true;
-            let w = 0, h = 0;
-            
-            // Detectar ancho
-            for (let dx = 0; dx < 6 && x + dx < width; dx++) {
-                const p = grid[y][x + dx];
-                if (p && p.type === 'obsidian') {
-                    w++;
-                } else {
-                    break;
-                }
-            }
-            
-            // Detectar alto
-            for (let dy = 0; dy < 8 && y + dy < height; dy++) {
-                const p = grid[y + dy][x];
-                if (p && p.type === 'obsidian') {
-                    h++;
-                } else {
-                    break;
-                }
-            }
-            
-            if (w >= 3 && h >= 4) {
-                // Verificar marco completo
-                // Verificar líneas horizontales
-                for (let dx = 0; dx < w; dx++) {
-                    if (!grid[y][x + dx] || grid[y][x + dx].type !== 'obsidian') valid = false;
-                    if (!grid[y + h - 1][x + dx] || grid[y + h - 1][x + dx].type !== 'obsidian') valid = false;
-                }
-                // Verificar líneas verticales
-                for (let dy = 0; dy < h; dy++) {
-                    if (!grid[y + dy][x] || grid[y + dy][x].type !== 'obsidian') valid = false;
-                    if (!grid[y + dy][x + w - 1] || grid[y + dy][x + w - 1].type !== 'obsidian') valid = false;
-                }
-                
-                if (valid) {
-                    // Crear portal
-                    for (let dy = 1; dy < h - 1; dy++) {
-                        for (let dx = 1; dx < w - 1; dx++) {
-                            if (!grid[y + dy][x + dx]) {
-                                grid[y + dy][x + dx] = { type: 'portal' };
+            // Buscar marcos de diferentes tamaños
+            for (let w = 3; w <= 6; w++) {
+                for (let h = 4; h <= 8; h++) {
+                    if (isValidPortalFrame(x, y, w, h)) {
+                        // Verificar si hay fuego DENTRO del marco
+                        let hasFire = false;
+                        for (let dy = 1; dy < h - 1; dy++) {
+                            for (let dx = 1; dx < w - 1; dx++) {
+                                const check = grid[y + dy][x + dx];
+                                if (check && (check.type === 'fire' || check.type === 'lava' || 
+                                             check.type === 'plasma' || check.type === 'magma')) {
+                                    hasFire = true;
+                                    break;
+                                }
                             }
+                            if (hasFire) break;
+                        }
+                        
+                        // Si hay fuego, activar portal
+                        if (hasFire) {
+                            for (let dy = 1; dy < h - 1; dy++) {
+                                for (let dx = 1; dx < w - 1; dx++) {
+                                    grid[y + dy][x + dx] = { type: 'portal' };
+                                }
+                            }
+                            return true;
                         }
                     }
                 }
             }
+            return false;
+        }
+        
+        function isValidPortalFrame(x, y, w, h) {
+            // Verificar límites
+            if (x + w > width || y + h > height) return false;
+            
+            // Verificar marco completo de obsidiana
+            for (let dx = 0; dx < w; dx++) {
+                if (!grid[y][x + dx] || grid[y][x + dx].type !== 'obsidian') return false;
+                if (!grid[y + h - 1][x + dx] || grid[y + h - 1][x + dx].type !== 'obsidian') return false;
+            }
+            for (let dy = 0; dy < h; dy++) {
+                if (!grid[y + dy][x] || grid[y + dy][x].type !== 'obsidian') return false;
+                if (!grid[y + dy][x + w - 1] || grid[y + dy][x + w - 1].type !== 'obsidian') return false;
+            }
+            return true;
         }
         
         // Dibujo
@@ -983,7 +1130,6 @@
         function update() {
             if (!isPaused) {
                 frameCount++;
-                // Actualizar de abajo hacia arriba
                 const startX = frameCount % 2 === 0 ? 0 : width - 1;
                 const endX = startX === 0 ? width : -1;
                 const stepX = startX === 0 ? 1 : -1;
@@ -1011,12 +1157,14 @@
                     if (particle) {
                         const mat = MATERIALS[particle.type];
                         if (mat) {
-                            // Colores especiales
                             if (particle.color) {
                                 ctx.fillStyle = particle.color;
                             } else if (particle.type === 'lava') {
                                 const pulse = Math.sin(Date.now() / 200) * 0.2 + 0.8;
                                 ctx.fillStyle = `rgb(${Math.floor(255 * pulse)}, ${Math.floor(69 * pulse)}, 0)`;
+                            } else if (particle.type === 'magma') {
+                                const pulse = Math.sin(Date.now() / 150) * 0.3 + 0.7;
+                                ctx.fillStyle = `rgb(${Math.floor(255 * pulse)}, ${Math.floor(102 * pulse)}, 0)`;
                             } else if (particle.type === 'plasma') {
                                 const pulse = Math.sin(Date.now() / 100) * 0.5 + 0.5;
                                 ctx.fillStyle = `rgb(${Math.floor(255 * pulse)}, 0, ${Math.floor(255 * (1-pulse))})`;
