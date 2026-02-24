@@ -6,1110 +6,290 @@
     <title>Sandbox Elemental - Laboratorio de Partículas</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=JetBrains+Mono:wght@400;600&display=swap');
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin:0; padding:0; box-sizing:border-box; }
         :root {
-            --bg-dark: #0a0e15;
-            --bg-panel: #131920;
-            --accent-cyan: #00fff2;
-            --accent-magenta: #ff00aa;
-            --accent-yellow: #ffeb3b;
-            --accent-eraser: #ff6b35;
-            --text-primary: #e0e7ff;
-            --text-secondary: #7a8aaa;
-            --border-glow: rgba(0, 255, 242, 0.3);
+            --bg-dark:#0a0e15; --bg-panel:#131920;
+            --accent-cyan:#00fff2; --accent-magenta:#ff00aa;
+            --accent-yellow:#ffeb3b; --text-primary:#e0e7ff;
+            --text-secondary:#7a8aaa; --border-glow:rgba(0,255,242,0.3);
         }
-        
-        body {
-            font-family: 'JetBrains Mono', monospace;
-            background: linear-gradient(135deg, var(--bg-dark) 0%, #1a1430 100%);
-            color: var(--text-primary);
-            overflow: hidden;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                linear-gradient(rgba(0, 255, 242, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 255, 242, 0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            pointer-events: none;
-            animation: gridMove 20s linear infinite;
-        }
-        
-        @keyframes gridMove {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(50px, 50px); }
-        }
-        
-        header {
-            background: var(--bg-panel);
-            padding: 0.8rem 2rem;
-            border-bottom: 2px solid var(--accent-cyan);
-            box-shadow: 0 4px 20px rgba(0, 255, 242, 0.2);
-            position: relative;
-            z-index: 10;
-        }
-        
-        h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.5rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            animation: titlePulse 3s ease-in-out infinite;
-        }
-        
-        @keyframes titlePulse {
-            0%, 100% { filter: brightness(1); }
-            50% { filter: brightness(1.3); }
-        }
-        
-        .container {
-            display: flex;
-            flex: 1;
-            gap: 1rem;
-            padding: 1rem;
-            position: relative;
-            z-index: 1;
-            overflow: hidden;
-        }
-        
-        .sidebar {
-            background: var(--bg-panel);
-            border: 2px solid var(--accent-cyan);
-            border-radius: 12px;
-            padding: 0.8rem;
-            width: 260px;
-            flex-shrink: 0;
-            box-shadow: 0 8px 32px rgba(0, 255, 242, 0.15);
-            overflow-y: auto;
-            max-height: calc(100vh - 100px);
-            display: flex;
-            flex-direction: column;
-            gap: 0.6rem;
-        }
-        
-        .sidebar::-webkit-scrollbar { width: 5px; }
-        .sidebar::-webkit-scrollbar-track { background: var(--bg-dark); border-radius: 4px; }
-        .sidebar::-webkit-scrollbar-thumb { background: var(--accent-cyan); border-radius: 4px; }
-        
-        /* ===================== ERASER BUTTON ===================== */
-        .eraser-btn {
-            background: linear-gradient(135deg, #1a0f0a, #2a1510);
-            border: 2px solid var(--accent-eraser);
-            border-radius: 8px;
-            padding: 0.5rem 0.6rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'JetBrains Mono', monospace;
-            font-weight: 600;
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--accent-eraser);
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.4rem;
-        }
-        
-        .eraser-btn:hover {
-            background: linear-gradient(135deg, #2a1510, #1a0f0a);
-            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
-            transform: translateY(-1px);
-        }
-        
-        .eraser-btn.active {
-            border-color: var(--accent-eraser);
-            box-shadow: 0 0 20px rgba(255, 107, 53, 0.5), inset 0 0 20px rgba(255, 107, 53, 0.1);
-            animation: eraserPulse 2s ease-in-out infinite;
-            color: #fff;
-            background: linear-gradient(135deg, #3a1a0a, #2a1010);
-        }
-        
-        @keyframes eraserPulse {
-            0%, 100% { box-shadow: 0 0 20px rgba(255, 107, 53, 0.5), inset 0 0 20px rgba(255, 107, 53, 0.1); }
-            50% { box-shadow: 0 0 30px rgba(255, 107, 53, 0.8), inset 0 0 30px rgba(255, 107, 53, 0.2); }
-        }
-
-        /* ===================== MATERIAL GRID ===================== */
-        .material-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.35rem;
-        }
-        
-        .material-btn {
-            background: linear-gradient(135deg, var(--bg-dark), #1a1f2e);
-            border: 1.5px solid rgba(255,255,255,0.08);
-            border-radius: 6px;
-            padding: 0.35rem 0.2rem;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            position: relative;
-            overflow: hidden;
-            font-family: 'JetBrains Mono', monospace;
-            font-weight: 600;
-            font-size: 0.58rem;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            color: var(--text-primary);
-            text-align: center;
-        }
-        
-        .material-btn::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: linear-gradient(135deg, transparent, rgba(255,255,255,0.08));
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        
-        .material-btn:hover::before { opacity: 1; }
-        .material-btn:hover {
-            transform: translateY(-1px);
-            border-color: rgba(0, 255, 242, 0.4);
-            box-shadow: 0 3px 10px rgba(0, 255, 242, 0.2);
-        }
-        
-        .material-btn.active {
-            border-color: var(--accent-cyan);
-            box-shadow: 0 0 12px var(--border-glow), inset 0 0 12px rgba(0, 255, 242, 0.08);
-            animation: activePulse 2s ease-in-out infinite;
-        }
-        
-        @keyframes activePulse {
-            0%, 100% { box-shadow: 0 0 12px var(--border-glow), inset 0 0 12px rgba(0, 255, 242, 0.08); }
-            50% { box-shadow: 0 0 20px rgba(0, 255, 242, 0.5), inset 0 0 20px rgba(0, 255, 242, 0.15); }
-        }
-        
-        .material-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 4px;
-            margin: 0 auto 0.25rem;
-            border: 1.5px solid rgba(255,255,255,0.15);
-            box-shadow: 0 1px 4px rgba(0,0,0,0.4);
-        }
-        
-        /* ===================== CONTROLS ===================== */
-        .controls {
-            background: rgba(19, 25, 32, 0.8);
-            border: 1px solid var(--accent-cyan);
-            border-radius: 8px;
-            padding: 0.8rem;
-        }
-        
-        .control-label {
-            font-size: 0.65rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 0.4rem;
-            display: block;
-        }
-        
-        .btn-control {
-            background: linear-gradient(135deg, var(--bg-dark), #1a1f2e);
-            border: 2px solid var(--accent-magenta);
-            color: var(--text-primary);
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-family: 'JetBrains Mono', monospace;
-            font-weight: 600;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            width: 100%;
-            margin-top: 0.4rem;
-            transition: all 0.3s ease;
-            letter-spacing: 1px;
-        }
-        
-        .btn-control:hover {
-            box-shadow: 0 4px 15px rgba(255, 0, 170, 0.4);
-            transform: translateY(-1px);
-        }
-        
-        .slider-container { margin-top: 0.5rem; }
-        
-        input[type="range"] {
-            width: 100%;
-            height: 5px;
-            border-radius: 3px;
-            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-magenta));
-            outline: none;
-            -webkit-appearance: none;
-        }
-        
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 14px; height: 14px;
-            border-radius: 50%;
-            background: var(--accent-yellow);
-            cursor: pointer;
-            box-shadow: 0 0 8px rgba(255, 235, 59, 0.6);
-            border: 2px solid var(--bg-dark);
-        }
-        
-        .canvas-container {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        canvas {
-            border: 3px solid var(--accent-cyan);
-            border-radius: 12px;
-            box-shadow: 0 0 40px rgba(0, 255, 242, 0.4), 0 0 80px rgba(255, 0, 170, 0.2);
-            cursor: crosshair;
-            background: #000000;
-            animation: canvasGlow 4s ease-in-out infinite;
-        }
-        
-        @keyframes canvasGlow {
-            0%, 100% { box-shadow: 0 0 40px rgba(0,255,242,0.4), 0 0 80px rgba(255,0,170,0.2); }
-            50% { box-shadow: 0 0 60px rgba(0,255,242,0.6), 0 0 100px rgba(255,0,170,0.3); }
-        }
-        
-        .info-text {
-            font-size: 0.62rem;
-            color: var(--text-secondary);
-            margin-top: 0.5rem;
-            line-height: 1.5;
-        }
-        
-        .section-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: var(--accent-cyan);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 0.5rem;
-            padding-bottom: 0.4rem;
-            border-bottom: 1px solid rgba(0, 255, 242, 0.3);
-        }
+        body { font-family:'JetBrains Mono',monospace; background:linear-gradient(135deg,var(--bg-dark) 0%,#1a1430 100%); color:var(--text-primary); overflow:hidden; height:100vh; display:flex; flex-direction:column; }
+        body::before { content:''; position:fixed; top:0; left:0; width:100%; height:100%; background-image:linear-gradient(rgba(0,255,242,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,242,0.03) 1px,transparent 1px); background-size:50px 50px; pointer-events:none; animation:gridMove 20s linear infinite; }
+        @keyframes gridMove { 0%{transform:translate(0,0)} 100%{transform:translate(50px,50px)} }
+        header { background:var(--bg-panel); padding:0.8rem 2rem; border-bottom:2px solid var(--accent-cyan); box-shadow:0 4px 20px rgba(0,255,242,0.2); position:relative; z-index:10; }
+        h1 { font-family:'Orbitron',sans-serif; font-size:1.5rem; font-weight:900; background:linear-gradient(135deg,var(--accent-cyan),var(--accent-magenta)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-transform:uppercase; letter-spacing:3px; animation:titlePulse 3s ease-in-out infinite; }
+        @keyframes titlePulse { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.3)} }
+        .container { display:flex; flex:1; gap:1rem; padding:1rem; position:relative; z-index:1; overflow:hidden; }
+        .sidebar { background:var(--bg-panel); border:2px solid var(--accent-cyan); border-radius:12px; padding:0.8rem; width:268px; flex-shrink:0; box-shadow:0 8px 32px rgba(0,255,242,0.15); overflow-y:auto; max-height:calc(100vh - 100px); display:flex; flex-direction:column; gap:0.5rem; }
+        .sidebar::-webkit-scrollbar{width:5px} .sidebar::-webkit-scrollbar-track{background:var(--bg-dark);border-radius:4px} .sidebar::-webkit-scrollbar-thumb{background:var(--accent-cyan);border-radius:4px}
+        .mat-section-title { grid-column:1/-1; font-family:'Orbitron',sans-serif; font-size:0.55rem; font-weight:700; color:var(--accent-cyan); text-transform:uppercase; letter-spacing:2px; padding:5px 2px 3px; border-bottom:1px solid rgba(0,255,242,0.25); margin-top:3px; }
+        .eraser-btn { background:linear-gradient(135deg,#1a0f0a,#2a1510); border:2px solid #ff6b35; border-radius:8px; padding:0.45rem 0.6rem; cursor:pointer; transition:all 0.3s ease; font-family:'JetBrains Mono',monospace; font-weight:600; font-size:0.65rem; text-transform:uppercase; letter-spacing:0.5px; color:#ff6b35; width:100%; display:flex; align-items:center; justify-content:center; gap:0.4rem; }
+        .eraser-btn:hover{box-shadow:0 4px 15px rgba(255,107,53,0.4);transform:translateY(-1px)}
+        .eraser-btn.active{box-shadow:0 0 20px rgba(255,107,53,0.5),inset 0 0 20px rgba(255,107,53,0.1);animation:eraserPulse 2s ease-in-out infinite;color:#fff}
+        .material-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:0.3rem; }
+        .material-btn { background:linear-gradient(135deg,var(--bg-dark),#1a1f2e); border:1.5px solid rgba(255,255,255,0.08); border-radius:6px; padding:0.3rem 0.15rem; cursor:pointer; transition:all 0.25s ease; font-family:'JetBrains Mono',monospace; font-weight:600; font-size:0.55rem; text-transform:uppercase; letter-spacing:0.3px; color:var(--text-primary); text-align:center; }
+        .material-btn:hover{transform:translateY(-1px);border-color:rgba(0,255,242,0.4);box-shadow:0 3px 10px rgba(0,255,242,0.2)}
+        .material-btn.active{border-color:var(--accent-cyan);box-shadow:0 0 12px var(--border-glow),inset 0 0 12px rgba(0,255,242,0.08);animation:activePulse 2s ease-in-out infinite}
+        .material-color{width:18px;height:18px;border-radius:4px;margin:0 auto 0.2rem;border:1.5px solid rgba(255,255,255,0.15);box-shadow:0 1px 4px rgba(0,0,0,0.4)}
+        .controls{background:rgba(19,25,32,0.8);border:1px solid var(--accent-cyan);border-radius:8px;padding:0.7rem}
+        .control-label{font-size:0.62rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.4rem;display:block}
+        .btn-control{background:linear-gradient(135deg,var(--bg-dark),#1a1f2e);border:2px solid var(--accent-magenta);color:var(--text-primary);padding:0.45rem 1rem;border-radius:6px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-weight:600;font-size:0.72rem;text-transform:uppercase;width:100%;margin-top:0.4rem;transition:all 0.3s ease;letter-spacing:1px}
+        .canvas-container{flex:1;display:flex;justify-content:center;align-items:center}
+        canvas{border:3px solid var(--accent-cyan);border-radius:12px;box-shadow:0 0 40px rgba(0,255,242,0.4),0 0 80px rgba(255,0,170,0.2);cursor:crosshair;background:#000}
+        .info-text{font-size:0.6rem;color:var(--text-secondary);margin-top:0.5rem;line-height:1.5}
+        .section-title{font-family:'Orbitron',sans-serif;font-size:0.72rem;font-weight:700;color:var(--accent-cyan);text-transform:uppercase;letter-spacing:2px;margin-bottom:0.5rem;padding-bottom:0.4rem;border-bottom:1px solid rgba(0,255,242,0.3)}
     </style>
 </head>
 <body>
-    <header>
-        <h1>⚛ Sandbox Elemental ⚛</h1>
-    </header>
-    
-    <div class="container">
-        <aside class="sidebar">
-            <div class="section-title">Materiales</div>
-
-            <!-- Botón Borrar destacado -->
-            <button class="eraser-btn" id="eraserBtn">
-                🧹 Borrar (Goma)
-            </button>
-
-            <div class="material-grid" id="materialGrid"></div>
-            
-            <div class="controls">
-                <div class="section-title">Controles</div>
-                <label class="control-label">Tamaño del Pincel</label>
-                <div class="slider-container">
-                    <input type="range" id="brushSize" min="1" max="20" value="5">
-                    <div class="info-text">Tamaño: <span id="brushValue">5</span>px</div>
-                </div>
-                
-                <button class="btn-control" id="clearBtn">🗑️ Limpiar Todo</button>
-                <button class="btn-control" id="pauseBtn">⏸️ Pausar</button>
-                
-                <div class="info-text" style="margin-top: 0.8rem;">
-                    💡 Click y arrastra para dibujar<br>
-                    🎨 Experimenta con reacciones<br>
-                    🔥 Portal: Marco obsidiana + fuego<br>
-                    🧪 Sodio + agua = EXPLOSIÓN<br>
-                    💧 H₂ + O₂ + fuego = Agua<br>
-                    ⚗️ Combina y descubre!
-                </div>
+<header><h1>⚛ Sandbox Elemental ⚛</h1></header>
+<div class="container">
+    <aside class="sidebar">
+        <div class="section-title">Materiales</div>
+        <button class="eraser-btn" id="eraserBtn">🧹 Borrar (Goma)</button>
+        <div class="material-grid" id="materialGrid"></div>
+        <div class="controls">
+            <div class="section-title">Controles</div>
+            <label class="control-label">Tamaño del Pincel</label>
+            <div class="slider-container">
+                <input type="range" id="brushSize" min="1" max="20" value="5">
+                <div class="info-text">Tamaño: <span id="brushValue">5</span>px</div>
             </div>
-        </aside>
-        
-        <div class="canvas-container">
-            <canvas id="canvas" width="800" height="600"></canvas>
+            <button class="btn-control" id="clearBtn">🗑️ Limpiar Todo</button>
+            <button class="btn-control" id="pauseBtn">⏸️ Pausar</button>
+            <div class="info-text" style="margin-top:0.8rem">
+                🌿 La planta necesita agua para crecer o se secará.<br>
+                🚜 Cosechadora: Limpia todo a su paso rebotando.<br>
+                💡 Bombilla: se ilumina con corriente.
+            </div>
         </div>
+    </aside>
+    <div class="canvas-container">
+        <canvas id="canvas" width="800" height="600"></canvas>
     </div>
+</div>
 
-    <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const pixelSize = 2;
-        const width = 400;
-        const height = 300;
-        
-        let grid = Array(height).fill(null).map(() => Array(width).fill(null));
-        let selectedMaterial = 'sand';
-        let isErasing = false;
-        let brushSize = 5;
-        let isDrawing = false;
-        let isPaused = false;
-        
-        const MATERIALS = {
-            sand: { name: 'Arena', color: '#f4a460', density: 1.5, type: 'powder' },
-            water: { name: 'Agua', color: '#1e90ff', density: 1, type: 'liquid' },
-            stone: { name: 'Piedra', color: '#696969', density: 10, type: 'solid' },
-            fire: { name: 'Fuego', color: '#ff4500', density: 0.1, type: 'gas', life: 60 },
-            ice: { name: 'Hielo', color: '#87ceeb', density: 0.9, type: 'solid' },
-            lava: { name: 'Lava', color: '#ff4500', density: 2, type: 'liquid', hot: true },
-            plant: { name: 'Planta', color: '#32cd32', density: 0.8, type: 'solid' },
-            explosive: { name: 'C4', color: '#ffeb3b', density: 1, type: 'solid' },
-            steam: { name: 'Vapor', color: '#f0f0f0', density: 0.05, type: 'gas', life: 120 },
-            acid: { name: 'Ácido', color: '#adff2f', density: 1.2, type: 'liquid' },
-            metal: { name: 'Metal', color: '#b8b8b8', density: 7, type: 'solid', conductive: true },
-            oil: { name: 'Aceite', color: '#654321', density: 0.8, type: 'liquid', flammable: true },
-            wood: { name: 'Madera', color: '#8b4513', density: 0.6, type: 'solid', flammable: true },
-            gunpowder: { name: 'Pólvora', color: '#2f2f2f', density: 1.3, type: 'powder', explosive: true },
-            petroleum: { name: 'Petróleo', color: '#1a1a1a', density: 0.85, type: 'liquid', flammable: true },
-            seed: { name: 'Semilla', color: '#a0522d', density: 1.2, type: 'powder' },
-            glass: { name: 'Vidrio', color: '#e6f3ff', density: 2.5, type: 'solid' },
-            smoke: { name: 'Humo', color: '#505050', density: 0.03, type: 'gas', life: 150 },
-            salt: { name: 'Sal', color: '#ffffff', density: 2.1, type: 'powder' },
-            concrete: { name: 'Hormigón', color: '#888888', density: 2.4, type: 'solid', resistant: true },
-            coal: { name: 'Carbón', color: '#1c1c1c', density: 1.4, type: 'solid', flammable: true },
-            obsidian: { name: 'Obsidiana', color: '#0f0820', density: 2.6, type: 'solid', portal: true },
-            dirt: { name: 'Tierra', color: '#5c4033', density: 1.6, type: 'powder', fertile: true },
-            methane: { name: 'Metano', color: '#90ee90', density: 0.02, type: 'gas', explosive: true, life: 200 },
-            plasma: { name: 'Plasma', color: '#ff00ff', density: 0.08, type: 'gas', life: 80, hot: true },
-            uranium: { name: 'Uranio', color: '#00ff00', density: 19, type: 'solid' },
-            neutron: { name: 'Neutrón', color: '#00ffff', density: 0.5, type: 'energy', life: 50 },
-            electricity: { name: 'Electric', color: '#ffff00', density: 0, type: 'energy', life: 15 },
-            concrete_powder: { name: 'P.Hormigón', color: '#a9a9a9', density: 1.8, type: 'powder' },
-            tnt: { name: 'TNT', color: '#ff0000', density: 1.5, type: 'solid', explosive: true },
-            brick: { name: 'Ladrillo', color: '#b22222', density: 2.0, type: 'solid', resistant: true },
-            clay: { name: 'Arcilla', color: '#b8860b', density: 1.7, type: 'powder' },
-            portal: { name: 'Portal', color: '#8b00ff', density: 0, type: 'special' },
-            mercury: { name: 'Mercurio', color: '#c0c0c0', density: 13.5, type: 'liquid', toxic: true },
-            sodium: { name: 'Sodio', color: '#ffd700', density: 0.97, type: 'solid', reactive: true },
-            chlorine: { name: 'Cloro', color: '#ccff00', density: 0.003, type: 'gas', toxic: true, life: 180 },
-            hydrogen: { name: 'Hidrógeno', color: '#ffe6e6', density: 0.00009, type: 'gas', explosive: true, life: 200 },
-            oxygen: { name: 'Oxígeno', color: '#e6f7ff', density: 0.0014, type: 'gas', life: 250 },
-            magma: { name: 'Magma', color: '#ff6600', density: 3, type: 'liquid', hot: true },
-            copper: { name: 'Cobre', color: '#b87333', density: 8.96, type: 'solid', conductive: true },
-            gold: { name: 'Oro', color: '#ffd700', density: 19.3, type: 'solid' },
-            silver: { name: 'Plata', color: '#c0c0c0', density: 10.5, type: 'solid', conductive: true },
-            phosphorus: { name: 'Fósforo', color: '#ffffe0', density: 1.82, type: 'solid', flammable: true },
-            sulfur: { name: 'Azufre', color: '#ffff00', density: 2.07, type: 'powder', flammable: true },
-            carbon: { name: 'Carbono', color: '#3c3c3c', density: 2.26, type: 'powder' },
-            nitrogen: { name: 'Nitrógeno', color: '#add8e6', density: 0.00125, type: 'gas', life: 300 },
-            helium: { name: 'Helio', color: '#ffc0cb', density: 0.00018, type: 'gas', life: 400 },
-            neon: { name: 'Neón', color: '#ff6347', density: 0.0009, type: 'gas', life: 350 },
-            ammonia: { name: 'Amoníaco', color: '#e0ffff', density: 0.00073, type: 'gas', toxic: true, life: 180 }
-        };
-        
-        // ===================== UI =====================
-        function initUI() {
-            const materialGrid = document.getElementById('materialGrid');
-            
-            Object.keys(MATERIALS).forEach(key => {
-                const material = MATERIALS[key];
-                const btn = document.createElement('button');
-                btn.className = 'material-btn';
-                btn.dataset.key = key;
-                btn.innerHTML = `
-                    <div class="material-color" style="background: ${material.color}"></div>
-                    <div>${material.name}</div>
-                `;
-                btn.onclick = () => selectMaterial(key);
-                materialGrid.appendChild(btn);
-            });
-            
-            // Activar primer material
-            document.querySelector('.material-btn').classList.add('active');
-            
-            // Botón Borrar (Goma)
-            const eraserBtn = document.getElementById('eraserBtn');
-            eraserBtn.onclick = () => {
-                isErasing = !isErasing;
-                eraserBtn.classList.toggle('active', isErasing);
-                // Desactivar material seleccionado visualmente
-                document.querySelectorAll('.material-btn').forEach(b => {
-                    b.classList.toggle('active', !isErasing && b.dataset.key === selectedMaterial);
-                });
-                canvas.style.cursor = isErasing ? 'cell' : 'crosshair';
-            };
-            
-            document.getElementById('brushSize').oninput = (e) => {
-                brushSize = parseInt(e.target.value);
-                document.getElementById('brushValue').textContent = brushSize;
-            };
-            
-            document.getElementById('clearBtn').onclick = () => {
-                grid = Array(height).fill(null).map(() => Array(width).fill(null));
-            };
-            
-            document.getElementById('pauseBtn').onclick = function() {
-                isPaused = !isPaused;
-                this.textContent = isPaused ? '▶️ Reanudar' : '⏸️ Pausar';
-            };
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const pixelSize = 2;
+const width = 400;
+const height = 300;
+
+let grid = Array(height).fill(null).map(() => Array(width).fill(null));
+let selectedMaterial = 'sand';
+let isErasing = false;
+let brushSize = 5;
+let isDrawing = false;
+let isPaused = false;
+
+const MATERIAL_ORDER = [
+    '__Básicos',
+    'sand','water','stone','dirt','clay','glass','salt','concrete_powder','concrete','brick',
+    '__Eléctricos & Especiales',
+    'condenser','firestone','harvester',
+    'rubber','bulb','door',
+    'electricity','metal','copper','silver','gold',
+    'obsidian','portal',
+    '__Fuego & Calor',
+    'fire','lava','magma','plasma',
+    'wood','coal','oil','petroleum',
+    '__Gases',
+    'steam','smoke','oxygen','hydrogen','methane',
+    '__Biología',
+    'plant','seed','ice',
+    '__Química',
+    'acid',
+];
+
+const MATERIALS = {
+    sand:            { name:'Arena',       color:'#f4a460', density:1.5,  type:'powder' },
+    water:           { name:'Agua',        color:'#1e90ff', density:1,    type:'liquid' },
+    stone:           { name:'Piedra',      color:'#696969', density:10,   type:'solid'  },
+    dirt:            { name:'Tierra',      color:'#5c4033', density:1.6,  type:'powder' },
+    clay:            { name:'Arcilla',     color:'#b8860b', density:1.7,  type:'powder' },
+    glass:           { name:'Vidrio',      color:'#c8e8ff', density:2.5,  type:'solid'  },
+    salt:            { name:'Sal',         color:'#f0f0f0', density:2.1,  type:'powder' },
+    concrete_powder: { name:'P.Hormigón',  color:'#a9a9a9', density:1.8,  type:'powder' },
+    concrete:        { name:'Hormigón',    color:'#888888', density:2.4,  type:'solid'  },
+    brick:           { name:'Ladrillo',    color:'#b22222', density:2.0,  type:'solid'  },
+    condenser: { name:'Condensador', color:'#4488aa', density:3, type:'solid' },
+    firestone:  { name:'PiedraFuego',color:'#cc3300', density:3, type:'solid'  },
+    harvester:  { name:'Cosechadora',color:'#ffffff', density:0, type:'special' },
+    rubber:     { name:'Goma',       color:'#333333', density:1.2,type:'solid' },
+    bulb:       { name:'Bombilla',   color:'#998855', density:1,  type:'solid' },
+    door:       { name:'Puerta',     color:'#7a4010', density:3,  type:'solid' },
+    electricity: { name:'Electr.',   color:'#ffff00', density:0,  type:'energy', life:15 },
+    metal:       { name:'Metal',     color:'#b8b8b8', density:7,  type:'solid', conductive:true },
+    copper:      { name:'Cobre',     color:'#b87333', density:8.96,type:'solid',conductive:true },
+    silver:      { name:'Plata',     color:'#c8c8c8', density:10.5,type:'solid',conductive:true },
+    gold:        { name:'Oro',       color:'#ffd700', density:19.3,type:'solid',conductive:true },
+    obsidian:    { name:'Obsidiana', color:'#0f0820', density:2.6, type:'solid' },
+    portal:      { name:'Portal',    color:'#8b00ff', density:0,   type:'special' },
+    fire:      { name:'Fuego',    color:'#ff4500', density:0.1,  type:'gas',    life:60  },
+    lava:      { name:'Lava',     color:'#ff4500', density:2,    type:'liquid', hot:true },
+    magma:     { name:'Magma',    color:'#ff6600', density:3,    type:'liquid', hot:true },
+    plasma:    { name:'Plasma',   color:'#ff00ff', density:0.08, type:'gas',    life:80, hot:true },
+    wood:      { name:'Madera',   color:'#8b4513', density:0.6,  type:'solid',  flammable:true },
+    coal:      { name:'Carbón',   color:'#1c1c1c', density:1.4,  type:'solid',  flammable:true },
+    oil:       { name:'Aceite',   color:'#654321', density:0.8,  type:'liquid', flammable:true },
+    petroleum: { name:'Petróleo', color:'#1a1a1a', density:0.85, type:'liquid', flammable:true },
+    steam:    { name:'Vapor',     color:'#d8d8d8', density:0.05,    type:'gas', life:120 },
+    smoke:    { name:'Humo',      color:'#505050', density:0.03,    type:'gas', life:150 },
+    oxygen:   { name:'Oxígeno',   color:'#d6f0ff', density:0.0014,  type:'gas', life:250 },
+    hydrogen: { name:'Hidrógeno', color:'#ffe6e6', density:0.00009, type:'gas', life:200 },
+    methane:  { name:'Metano',    color:'#90ee90', density:0.02,    type:'gas', life:200 },
+    plant: { name:'Planta',  color:'#32cd32', density:0.8, type:'solid'  },
+    seed:  { name:'Semilla', color:'#a0522d', density:1.2, type:'powder' },
+    ice:   { name:'Hielo',   color:'#87ceeb', density:0.9, type:'solid'  },
+    acid: { name:'Ácido', color:'#adff2f', density:1.2, type:'liquid' },
+};
+
+function initUI() {
+    const materialGrid = document.getElementById('materialGrid');
+    MATERIAL_ORDER.forEach(key => {
+        if (key.startsWith('__')) {
+            const t = document.createElement('div');
+            t.className = 'mat-section-title';
+            t.textContent = key.slice(2);
+            materialGrid.appendChild(t);
+            return;
         }
+        const mat = MATERIALS[key]; if (!mat) return;
+        const btn = document.createElement('button');
+        btn.className = 'material-btn';
+        btn.dataset.key = key;
+        btn.innerHTML = `<div class="material-color" style="background:${mat.color}"></div><div>${mat.name}</div>`;
+        btn.onclick = () => selectMaterial(key);
+        materialGrid.appendChild(btn);
+    });
+    document.getElementById('brushSize').oninput = e => {
+        brushSize = parseInt(e.target.value);
+        document.getElementById('brushValue').textContent = brushSize;
+    };
+    document.getElementById('clearBtn').onclick = () => { grid = Array(height).fill(null).map(() => Array(width).fill(null)); };
+    document.getElementById('pauseBtn').onclick = function () { isPaused = !isPaused; this.textContent = isPaused ? '▶️ Reanudar' : '⏸️ Pausar'; };
+    document.getElementById('eraserBtn').onclick = () => {
+        isErasing = !isErasing;
+        document.getElementById('eraserBtn').classList.toggle('active', isErasing);
+        canvas.style.cursor = isErasing ? 'cell' : 'crosshair';
+    };
+}
+
+function selectMaterial(key) {
+    selectedMaterial = key; isErasing = false;
+    document.getElementById('eraserBtn').classList.remove('active');
+    document.querySelectorAll('.material-btn').forEach(b => b.classList.toggle('active', b.dataset.key === key));
+}
+
+function movePowder(x, y) {
+    const p = grid[y][x];
+    if (y+1 < height && !grid[y+1][x]) { grid[y+1][x]=p; grid[y][x]=null; return; }
+    const d = Math.random()<0.5?-1:1;
+    if (y<height-1 && x+d>=0 && x+d<width && !grid[y+1][x+d]) { grid[y+1][x+d]=p; grid[y][x]=null; }
+}
+
+function moveLiquid(x, y) {
+    const p=grid[y][x];
+    if(y+1<height && !grid[y+1][x]){grid[y+1][x]=p;grid[y][x]=null;return;}
+    const d=Math.random()<0.5?-1:1;
+    if(x+d>=0 && x+d<width && !grid[y][x+d]){grid[y][x+d]=p;grid[y][x]=null;}
+}
+
+function updateParticle(x, y) {
+    const p = grid[y][x]; if (!p) return;
+    const mat = MATERIALS[p.type];
+
+    if (p.type === 'harvester') {
+        if (p.vx === undefined) p.vx = 1;
+        let nx = x + p.vx;
+        if (nx < 0 || nx >= width) { p.vx *= -1; nx = x + p.vx; }
+        if (grid[y][nx] && grid[y][nx].type !== 'harvester') grid[y][nx] = null;
+        grid[y][nx] = p; grid[y][x] = null;
+        return;
+    }
+
+    if (p.life !== undefined) { p.life--; if (p.life<=0) { grid[y][x] = null; return; } }
+    if (mat.type==='powder') movePowder(x, y);
+    if (mat.type==='liquid') moveLiquid(x, y);
+    if (mat.type==='gas') { if(y>0 && Math.random()<0.1) { const nx=x+Math.floor(Math.random()*3)-1; if(nx>=0 && nx<width && !grid[y-1][nx]){grid[y-1][nx]=p; grid[y][x]=null;}}}
+
+    // Lógica de Planta
+    if (p.type === 'plant') {
+        if (p.waterLevel === undefined) p.waterLevel = 100;
+        if (p.dryLevel === undefined) p.dryLevel = 0;
         
-        function selectMaterial(key) {
-            selectedMaterial = key;
-            isErasing = false;
-            document.getElementById('eraserBtn').classList.remove('active');
-            canvas.style.cursor = 'crosshair';
-            document.querySelectorAll('.material-btn').forEach(b => {
-                b.classList.toggle('active', b.dataset.key === key);
-            });
-        }
-        
-        // ===================== MOVIMIENTO =====================
-        function movePowder(x, y) {
-            const particle = grid[y][x];
-            if (!particle) return false;
-            const speed = Math.min(Math.ceil(particle.density / 1.5), 3);
-            for (let i = 1; i <= speed; i++) {
-                if (y + i < height && !grid[y + i][x]) {
-                    grid[y + i][x] = particle; grid[y][x] = null; return true;
-                }
-            }
-            const dir = Math.random() < 0.5 ? -1 : 1;
-            if (y < height - 1) {
-                if (x + dir >= 0 && x + dir < width && !grid[y + 1][x + dir]) {
-                    grid[y + 1][x + dir] = particle; grid[y][x] = null; return true;
-                }
-                if (x - dir >= 0 && x - dir < width && !grid[y + 1][x - dir]) {
-                    grid[y + 1][x - dir] = particle; grid[y][x] = null; return true;
-                }
-            }
-            return false;
-        }
-        
-        function moveLiquid(x, y) {
-            const particle = grid[y][x];
-            if (!particle) return false;
-            if (y < height - 1 && !grid[y + 1][x]) {
-                grid[y + 1][x] = particle; grid[y][x] = null; return true;
-            }
-            const dir = Math.random() < 0.5 ? -1 : 1;
-            for (let i = 1; i <= 3; i++) {
-                if (x + dir * i >= 0 && x + dir * i < width && !grid[y][x + dir * i]) {
-                    grid[y][x + dir * i] = particle; grid[y][x] = null; return true;
-                }
-            }
-            return false;
-        }
-        
-        function moveGas(x, y, speed = 0.8) {
-            const particle = grid[y][x];
-            if (!particle) return false;
-            if (y > 0 && Math.random() < speed) {
-                const drift = Math.floor(Math.random() * 3) - 1;
-                const nx = x + drift;
-                if (nx >= 0 && nx < width && !grid[y - 1][nx]) {
-                    grid[y - 1][nx] = particle; grid[y][x] = null; return true;
-                }
-            }
-            return false;
-        }
-        
-        function explode(x, y, radius) {
-            for (let dy = -radius; dy <= radius; dy += 2) {
-                for (let dx = -radius; dx <= radius; dx += 2) {
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist <= radius) {
-                        const nx = x + dx;
-                        const ny = y + dy;
-                        if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-                            const intensity = 1 - dist / radius;
-                            if (Math.random() < intensity * 0.8) {
-                                grid[ny][nx] = dist < radius * 0.4
-                                    ? { type: 'plasma', life: 60 }
-                                    : { type: 'fire', life: 50 };
-                            }
-                        }
-                    }
-                }
+        p.waterLevel -= 0.1; 
+
+        // Buscar agua cerca
+        let foundWater = false;
+        for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++) {
+            let nx=x+dx, ny=y+dy;
+            if(nx>=0 && nx<width && ny>=0 && ny<height && grid[ny][nx] && grid[ny][nx].type === 'water') {
+                grid[ny][nx] = null; 
+                p.waterLevel = 100;
+                p.dryLevel = 0;
+                p.color = '#32cd32'; 
+                foundWater = true;
             }
         }
-        
-        function propagateHeat(x, y, heatType, radius, probability, convertTo) {
-            const queue = [[x, y, 0]];
-            const visited = new Set();
-            visited.add(`${x},${y}`);
-            while (queue.length > 0) {
-                const [cx, cy, depth] = queue.shift();
-                if (depth >= radius) continue;
-                for (let dy = -1; dy <= 1; dy++) {
-                    for (let dx = -1; dx <= 1; dx++) {
-                        if (dx === 0 && dy === 0) continue;
-                        const nx = cx + dx;
-                        const ny = cy + dy;
-                        const key = `${nx},${ny}`;
-                        if (nx >= 0 && nx < width && ny >= 0 && ny < height && !visited.has(key)) {
-                            visited.add(key);
-                            const neighbor = grid[ny][nx];
-                            if (neighbor && neighbor.type === heatType) {
-                                const chance = probability / (depth + 1);
-                                if (Math.random() < chance) {
-                                    if (convertTo) { grid[ny][nx] = { type: convertTo }; }
-                                    else { grid[ny][nx].heating = true; }
-                                    queue.push([nx, ny, depth + 1]);
-                                }
-                            }
-                        }
-                    }
-                }
+
+        if (p.waterLevel > 50 && Math.random() < 0.01) {
+            const dirs = [[0,-1],[-1,0],[1,0]];
+            const d = dirs[Math.floor(Math.random()*3)];
+            const nx=x+d[0], ny=y+d[1];
+            if(nx>=0 && nx<width && ny>=0 && ny<height && !grid[ny][nx]) grid[ny][nx]={type:'plant', waterLevel: p.waterLevel-10};
+        }
+
+        if (p.waterLevel <= 0) {
+            p.dryLevel++;
+            if (p.dryLevel > 200) { p.color = '#bcaf80'; } // Color marrón claro (seco)
+            if (p.dryLevel > 600) grid[y][x] = null; // Muere definitivamente
+        }
+    }
+
+    if (p.type === 'seed' && y < height-1 && grid[y+1][x] && grid[y+1][x].type === 'water') {
+        grid[y][x] = {type:'plant', waterLevel: 100};
+    }
+}
+
+canvas.addEventListener('mousedown', e=>{isDrawing=true;applyTool(e);});
+canvas.addEventListener('mousemove', e=>{if(isDrawing)applyTool(e);});
+window.addEventListener('mouseup', ()=>{isDrawing=false;});
+
+function applyTool(e){
+    const rect=canvas.getBoundingClientRect();
+    const x=Math.floor((e.clientX-rect.left)/pixelSize);
+    const y=Math.floor((e.clientY-rect.top)/pixelSize);
+    for(let dy=-brushSize;dy<=brushSize;dy++) for(let dx=-brushSize;dx<=brushSize;dx++){
+        if(Math.sqrt(dx*dx+dy*dy)<=brushSize){
+            const px=x+dx,py=y+dy;
+            if(px>=0&&px<width&&py>=0&&py<height){
+                if(isErasing) grid[py][px]=null;
+                else if(!grid[py][px]) grid[py][px]={type:selectedMaterial};
             }
         }
-        
-        // ===================== UPDATE =====================
-        function updateParticle(x, y) {
-            const particle = grid[y][x];
-            if (!particle) return;
-            const type = particle.type;
-            const mat = MATERIALS[type];
-            if (!mat) return;
-            
-            if (particle.life !== undefined) {
-                particle.life--;
-                if (particle.life <= 0) {
-                    if (type === 'fire' || type === 'plasma') {
-                        grid[y][x] = Math.random() < 0.3 ? { type: 'smoke', life: 100 } : null;
-                    } else {
-                        grid[y][x] = null;
-                    }
-                    return;
-                }
-            }
-            
-            if (mat.type === 'powder') { movePowder(x, y); }
-            else if (mat.type === 'liquid') { moveLiquid(x, y); }
-            else if (mat.type === 'gas') {
-                const speed = type === 'methane' ? 0.95 : type === 'hydrogen' ? 0.98 : type === 'helium' ? 0.99 : 0.8;
-                moveGas(x, y, speed);
-            } else if (type === 'neutron') {
-                const vx = particle.vx || 1;
-                const vy = particle.vy || 0;
-                const nx = x + vx; const ny = y + vy;
-                if (nx >= 0 && nx < width && ny >= 0 && ny < height && !grid[ny][nx]) {
-                    grid[ny][nx] = particle; grid[y][x] = null;
-                } else { grid[y][x] = null; }
-                return;
-            }
-            
-            checkReactions(x, y);
-        }
-        
-        // ===================== REACCIONES =====================
-        function checkReactions(x, y) {
-            const particle = grid[y][x];
-            if (!particle) return;
-            const type = particle.type;
-            
-            for (let dy = -1; dy <= 1; dy++) {
-                for (let dx = -1; dx <= 1; dx++) {
-                    if (dx === 0 && dy === 0) continue;
-                    const nx = x + dx; const ny = y + dy;
-                    if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
-                    const neighbor = grid[ny][nx];
-                    if (!neighbor) continue;
-                    
-                    // Sodio + Agua = EXPLOSIÓN
-                    if ((type === 'sodium' && neighbor.type === 'water') ||
-                        (type === 'water' && neighbor.type === 'sodium')) {
-                        explode(x, y, 18);
-                        for (let i = 0; i < 12; i++) {
-                            const angle = (Math.PI * 2 * i) / 12;
-                            const fx = Math.round(x + Math.cos(angle) * 8);
-                            const fy = Math.round(y + Math.sin(angle) * 8);
-                            if (fx >= 0 && fx < width && fy >= 0 && fy < height && !grid[fy][fx]) {
-                                grid[fy][fx] = { type: 'hydrogen', life: 150 };
-                            }
-                        }
-                        return;
-                    }
-                    
-                    // ====================================================
-                    // HIDRÓGENO + OXÍGENO [+ fuego] = AGUA + explosión
-                    // ====================================================
-                    if ((type === 'hydrogen' && neighbor.type === 'oxygen') ||
-                        (type === 'oxygen' && neighbor.type === 'hydrogen')) {
-                        // Buscar fuego/calor cercano para encender
-                        let hasFire = false;
-                        for (let sy = -3; sy <= 3 && !hasFire; sy++) {
-                            for (let sx = -3; sx <= 3 && !hasFire; sx++) {
-                                const cy = y + sy; const cx = x + sx;
-                                if (cx >= 0 && cx < width && cy >= 0 && cy < height) {
-                                    const c = grid[cy][cx];
-                                    if (c && (c.type === 'fire' || c.type === 'plasma' ||
-                                              c.type === 'lava' || c.type === 'electricity')) {
-                                        hasFire = true;
-                                    }
-                                }
-                            }
-                        }
-                        if (hasFire && Math.random() < 0.12) {
-                            // Pequeña explosión de ignición
-                            explode(x, y, 8);
-                            // Producir agua (reacción 2H₂ + O₂ → 2H₂O)
-                            grid[y][x] = { type: 'water' };
-                            grid[ny][nx] = { type: 'water' };
-                            // Producir algo de vapor por el calor
-                            for (let i = 0; i < 4; i++) {
-                                const angle = (Math.PI * 2 * i) / 4;
-                                const fx = Math.round(x + Math.cos(angle) * 3);
-                                const fy = Math.round(y + Math.sin(angle) * 3);
-                                if (fx >= 0 && fx < width && fy >= 0 && fy < height && !grid[fy][fx]) {
-                                    grid[fy][fx] = { type: 'steam', life: 120 };
-                                }
-                            }
-                            return;
-                        }
-                        // Sin fuego: el H₂ simplemente se quema si hay O₂ suficiente (lento)
-                        if (!hasFire && Math.random() < 0.005) {
-                            // Combustión espontánea muy lenta → solo agua sin explosión
-                            grid[y][x] = { type: 'water' };
-                            grid[ny][nx] = null;
-                            return;
-                        }
-                    }
-                    
-                    // Fósforo + Oxígeno = Fuego
-                    if ((type === 'phosphorus' && neighbor.type === 'oxygen') ||
-                        (type === 'oxygen' && neighbor.type === 'phosphorus')) {
-                        if (Math.random() < 0.1) {
-                            grid[y][x] = { type: 'fire', life: 120 };
-                            grid[ny][nx] = { type: 'fire', life: 120 };
-                            return;
-                        }
-                    }
-                    
-                    // Lava + Agua = Piedra + Vapor
-                    if (type === 'lava' && neighbor.type === 'water') {
-                        grid[y][x] = { type: 'stone' };
-                        grid[ny][nx] = { type: 'steam', life: 100 };
-                        for (let i = 0; i < 6; i++) {
-                            const angle = (Math.PI * 2 * i) / 6;
-                            const fx = Math.round(x + Math.cos(angle) * 2);
-                            const fy = Math.round(y + Math.sin(angle) * 2);
-                            if (fx >= 0 && fx < width && fy >= 0 && fy < height && !grid[fy][fx]) {
-                                grid[fy][fx] = { type: 'steam', life: 80 };
-                            }
-                        }
-                        return;
-                    }
-                    
-                    if (type === 'magma' && neighbor.type === 'water') {
-                        grid[y][x] = { type: 'lava' };
-                        grid[ny][nx] = { type: 'steam', life: 120 };
-                        explode(x, y, 8);
-                        return;
-                    }
-                    
-                    // Combustión
-                    if ((type === 'fire' || type === 'lava' || type === 'plasma' || type === 'magma') && Math.random() < 0.2) {
-                        if (neighbor.type === 'oil' || neighbor.type === 'petroleum') {
-                            grid[ny][nx] = { type: 'fire', life: 120 };
-                            if (Math.random() < 0.3) {
-                                for (const [ddx, ddy] of [[0,-1],[0,1],[-1,0],[1,0]]) {
-                                    const fx = nx + ddx; const fy = ny + ddy;
-                                    if (fx >= 0 && fx < width && fy >= 0 && fy < height) {
-                                        const c = grid[fy][fx];
-                                        if (c && (c.type === 'oil' || c.type === 'petroleum')) {
-                                            grid[fy][fx] = { type: 'fire', life: 100 };
-                                        }
-                                    }
-                                }
-                            }
-                        } else if (neighbor.type === 'wood' && !neighbor.burning) {
-                            neighbor.burning = true; neighbor.burnTime = 150;
-                        } else if (neighbor.type === 'gunpowder') {
-                            explode(nx, ny, 10); return;
-                        } else if (neighbor.type === 'plant') {
-                            grid[ny][nx] = { type: 'fire', life: 50 };
-                        } else if (neighbor.type === 'methane') {
-                            explode(nx, ny, 15); return;
-                        } else if (neighbor.type === 'coal' && !neighbor.burning) {
-                            neighbor.burning = true; neighbor.burnTime = 300;
-                        } else if (neighbor.type === 'sulfur') {
-                            grid[ny][nx] = { type: 'fire', life: 80 };
-                            propagateHeat(nx, ny, 'sulfur', 3, 0.4, 'fire');
-                        } else if (neighbor.type === 'phosphorus') {
-                            grid[ny][nx] = { type: 'fire', life: 100 };
-                        }
-                        // El fuego/plasma consume oxígeno (lo hace más realista)
-                        else if (neighbor.type === 'oxygen') {
-                            grid[ny][nx] = null; // el O2 alimenta el fuego y se consume
-                        }
-                        // Hidrógeno + fuego = pequeña explosión + agua
-                        else if (neighbor.type === 'hydrogen') {
-                            if (Math.random() < 0.3) {
-                                explode(nx, ny, 6);
-                                grid[ny][nx] = { type: 'water' };
-                                return;
-                            }
-                        }
-                    }
-                    
-                    // Explosivos
-                    if ((type === 'explosive' || type === 'tnt') &&
-                        (neighbor.type === 'fire' || neighbor.type === 'lava' ||
-                         neighbor.type === 'electricity' || neighbor.type === 'plasma')) {
-                        explode(x, y, type === 'tnt' ? 20 : 15); return;
-                    }
-                    
-                    // Hielo
-                    if (type === 'ice' && Math.random() < 0.02) {
-                        if (neighbor.type === 'water') {
-                            grid[ny][nx] = { type: 'ice' };
-                            propagateHeat(nx, ny, 'water', 4, 0.3, 'ice');
-                        } else if (neighbor.type === 'fire' || neighbor.type === 'lava') {
-                            grid[ny][nx] = { type: 'water' };
-                        }
-                    }
-                    
-                    // Semillas
-                    if (type === 'seed' && neighbor.type === 'water' && Math.random() < 0.05) {
-                        grid[y][x] = { type: 'plant', growth: 0 };
-                        if (y > 0 && !grid[y-1][x]) grid[y-1][x] = { type: 'plant', growth: 0 };
-                        return;
-                    }
-                    
-                    if (type === 'seed' && neighbor.type === 'dirt' && neighbor.wet && Math.random() < 0.08) {
-                        grid[y][x] = { type: 'plant', growth: 0 }; return;
-                    }
-                    
-                    // Tierra
-                    if (type === 'dirt' && neighbor.type === 'water' && !particle.wet && Math.random() < 0.1) {
-                        particle.wet = true; particle.color = '#3d2817';
-                        grid[ny][nx] = null;
-                        propagateHeat(x, y, 'dirt', 5, 0.4, null);
-                        for (let dy2 = -1; dy2 <= 1; dy2++) {
-                            for (let dx2 = -1; dx2 <= 1; dx2++) {
-                                const nx2 = x + dx2; const ny2 = y + dy2;
-                                if (nx2 >= 0 && nx2 < width && ny2 >= 0 && ny2 < height) {
-                                    const n2 = grid[ny2][nx2];
-                                    if (n2 && n2.type === 'dirt' && !n2.wet && Math.random() < 0.4) {
-                                        n2.wet = true; n2.color = '#3d2817';
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Hormigón
-                    if (type === 'concrete_powder' && neighbor.type === 'water' && Math.random() < 0.3) {
-                        grid[y][x] = { type: 'concrete' };
-                        if (Math.random() < 0.5) grid[ny][nx] = null;
-                        propagateHeat(x, y, 'concrete_powder', 8, 0.5, 'concrete'); return;
-                    }
-                    
-                    // Arcilla → Ladrillo
-                    if (type === 'clay' && (neighbor.type === 'lava' || neighbor.type === 'fire' ||
-                        neighbor.type === 'plasma' || neighbor.type === 'magma') && Math.random() < 0.08) {
-                        grid[y][x] = { type: 'brick' };
-                        propagateHeat(x, y, 'clay', 15, 0.6, 'brick'); return;
-                    }
-                    
-                    // Arena → Vidrio
-                    if (type === 'lava' && neighbor.type === 'sand' && Math.random() < 0.08) {
-                        grid[ny][nx] = { type: 'glass' };
-                        propagateHeat(nx, ny, 'sand', 4, 0.4, 'glass');
-                    }
-                    
-                    // Metal + Agua → Óxido
-                    if (type === 'metal' && neighbor.type === 'water' && Math.random() < 0.002) {
-                        grid[y][x] = { type: 'sand', color: '#b7410e' };
-                        propagateHeat(x, y, 'metal', 3, 0.15, null);
-                        for (let dy2 = -1; dy2 <= 1; dy2++) {
-                            for (let dx2 = -1; dx2 <= 1; dx2++) {
-                                const nx2 = x + dx2; const ny2 = y + dy2;
-                                if (nx2 >= 0 && nx2 < width && ny2 >= 0 && ny2 < height) {
-                                    const n2 = grid[ny2][nx2];
-                                    if (n2 && n2.type === 'metal' && Math.random() < 0.1) {
-                                        grid[ny2][nx2] = { type: 'sand', color: '#b7410e' };
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Ácido
-                    if (type === 'acid' && Math.random() < 0.15) {
-                        if (neighbor.type === 'metal' || neighbor.type === 'copper' || neighbor.type === 'silver') {
-                            grid[ny][nx] = { type: 'smoke', life: 80 };
-                            if (Math.random() < 0.3) grid[y][x] = null;
-                        } else if (neighbor.type === 'stone' || neighbor.type === 'concrete') {
-                            if (Math.random() < 0.05) grid[ny][nx] = { type: 'sand', color: '#888888' };
-                        } else if (neighbor.type === 'wood' || neighbor.type === 'plant') {
-                            grid[ny][nx] = { type: 'smoke', life: 60 };
-                        }
-                    }
-                    
-                    // Mercurio
-                    if (type === 'mercury' && neighbor.type === 'metal' && Math.random() < 0.03) {
-                        grid[ny][nx] = { type: 'mercury' };
-                    }
-                    if (type === 'mercury' && (neighbor.type === 'gold' || neighbor.type === 'silver') && Math.random() < 0.01) {
-                        grid[ny][nx] = { type: 'mercury', color: '#d4af37' };
-                    }
-                    
-                    // Cloro
-                    if (type === 'chlorine' && Math.random() < 0.1) {
-                        if (neighbor.type === 'sodium') {
-                            grid[y][x] = { type: 'salt' }; grid[ny][nx] = { type: 'salt' }; return;
-                        } else if (neighbor.type === 'hydrogen') {
-                            grid[y][x] = { type: 'acid' }; grid[ny][nx] = null; return;
-                        }
-                    }
-                    
-                    // Uranio
-                    if (type === 'uranium' && neighbor.type === 'neutron' && Math.random() < 0.5) {
-                        explode(x, y, 20);
-                        for (let i = 0; i < 8; i++) {
-                            const angle = (Math.PI * 2 * i) / 8;
-                            const fx = Math.round(x + Math.cos(angle) * 5);
-                            const fy = Math.round(y + Math.sin(angle) * 5);
-                            if (fx >= 0 && fx < width && fy >= 0 && fy < height) {
-                                grid[fy][fx] = { type: 'neutron', life: 50,
-                                    vx: Math.round(Math.cos(angle) * 2),
-                                    vy: Math.round(Math.sin(angle) * 2) };
-                            }
-                        }
-                        return;
-                    }
-                    
-                    // Electricidad
-                    if (type === 'electricity' && neighbor.conductive && Math.random() < 0.4) {
-                        grid[ny][nx] = { type: 'electricity', life: 15 };
-                    }
-                    if (type === 'electricity' && neighbor.type === 'water' && Math.random() < 0.2) {
-                        grid[ny][nx] = { type: 'electricity', life: 10 };
-                    }
-                    
-                    // Amoníaco
-                    if (type === 'ammonia' && neighbor.type === 'fire' && Math.random() < 0.15) {
-                        explode(x, y, 10);
-                        for (let i = 0; i < 6; i++) {
-                            const angle = (Math.PI * 2 * i) / 6;
-                            const fx = Math.round(x + Math.cos(angle) * 4);
-                            const fy = Math.round(y + Math.sin(angle) * 4);
-                            if (fx >= 0 && fx < width && fy >= 0 && fy < height) {
-                                grid[fy][fx] = { type: 'nitrogen', life: 150 };
-                            }
-                        }
-                        return;
-                    }
-                    
-                    // Portales
-                    if (type === 'portal' && Math.random() < 0.05 &&
-                        neighbor.type !== 'portal' && neighbor.type !== 'obsidian') {
-                        for (let py = Math.max(0, y - 100); py < Math.min(height, y + 100); py += 5) {
-                            for (let px = Math.max(0, x - 100); px < Math.min(width, x + 100); px += 5) {
-                                const p = grid[py][px];
-                                if (p && p.type === 'portal' && (px !== x || py !== y)) {
-                                    for (let ty = -2; ty <= 2; ty++) {
-                                        for (let tx = -2; tx <= 2; tx++) {
-                                            const tpx = px + tx; const tpy = py + ty;
-                                            if (tpx >= 0 && tpx < width && tpy >= 0 && tpy < height && !grid[tpy][tpx]) {
-                                                grid[tpy][tpx] = neighbor;
-                                                grid[ny][nx] = null; return;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Comportamientos especiales
-            if (type === 'wood' && particle.burning) {
-                particle.burnTime = (particle.burnTime || 150) - 1;
-                if (particle.burnTime <= 0) { grid[y][x] = { type: 'fire', life: 30 }; }
-                else if (Math.random() < 0.1 && y > 0 && !grid[y-1][x]) {
-                    grid[y-1][x] = { type: 'smoke', life: 120 };
-                }
-            }
-            
-            if (type === 'coal' && particle.burning) {
-                particle.burnTime = (particle.burnTime || 300) - 1;
-                if (particle.burnTime <= 0) { grid[y][x] = null; }
-                else if (Math.random() < 0.15 && y > 0 && !grid[y-1][x]) {
-                    grid[y-1][x] = { type: 'fire', life: 70 };
-                }
-            }
-            
-            if (type === 'plant' && Math.random() < 0.015) {
-                particle.growth = (particle.growth || 0) + 1;
-                if (particle.growth < 5) {
-                    const dirs = [[0,-1],[-1,0],[1,0]];
-                    const dir = dirs[Math.floor(Math.random() * dirs.length)];
-                    const nx = x + dir[0]; const ny = y + dir[1];
-                    if (nx >= 0 && nx < width && ny >= 0 && ny < height && !grid[ny][nx]) {
-                        grid[ny][nx] = { type: 'plant', growth: 0 };
-                    }
-                }
-            }
-            
-            if (type === 'uranium' && Math.random() < 0.01) {
-                const angle = Math.random() * Math.PI * 2;
-                const nx = Math.round(x + Math.cos(angle));
-                const ny = Math.round(y + Math.sin(angle));
-                if (nx >= 0 && nx < width && ny >= 0 && ny < height && !grid[ny][nx]) {
-                    grid[ny][nx] = { type: 'neutron', life: 50,
-                        vx: Math.round(Math.cos(angle) * 2),
-                        vy: Math.round(Math.sin(angle) * 2) };
-                }
-            }
-            
-            if (type === 'obsidian' && Math.random() < 0.02) {
-                checkPortalFrame(x, y);
-            }
-        }
-        
-        function checkPortalFrame(x, y) {
-            for (let w = 3; w <= 6; w++) {
-                for (let h = 4; h <= 8; h++) {
-                    if (isValidPortalFrame(x, y, w, h)) {
-                        let hasFire = false;
-                        for (let dy = 1; dy < h - 1 && !hasFire; dy++) {
-                            for (let dx = 1; dx < w - 1 && !hasFire; dx++) {
-                                const c = grid[y + dy][x + dx];
-                                if (c && (c.type === 'fire' || c.type === 'lava' || c.type === 'plasma' || c.type === 'magma')) {
-                                    hasFire = true;
-                                }
-                            }
-                        }
-                        if (hasFire) {
-                            for (let dy = 1; dy < h - 1; dy++) {
-                                for (let dx = 1; dx < w - 1; dx++) {
-                                    grid[y + dy][x + dx] = { type: 'portal' };
-                                }
-                            }
-                            return true;
-                        }
-                    }
-                }
-            }
-            return false;
-        }
-        
-        function isValidPortalFrame(x, y, w, h) {
-            if (x + w > width || y + h > height) return false;
-            for (let dx = 0; dx < w; dx++) {
-                if (!grid[y][x + dx] || grid[y][x + dx].type !== 'obsidian') return false;
-                if (!grid[y + h - 1][x + dx] || grid[y + h - 1][x + dx].type !== 'obsidian') return false;
-            }
-            for (let dy = 0; dy < h; dy++) {
-                if (!grid[y + dy][x] || grid[y + dy][x].type !== 'obsidian') return false;
-                if (!grid[y + dy][x + w - 1] || grid[y + dy][x + w - 1].type !== 'obsidian') return false;
-            }
-            return true;
-        }
-        
-        // ===================== DIBUJO / BORRAR =====================
-        canvas.addEventListener('mousedown', (e) => { isDrawing = true; applyTool(e); });
-        canvas.addEventListener('mousemove', (e) => { if (isDrawing) applyTool(e); });
-        canvas.addEventListener('mouseup', () => { isDrawing = false; });
-        canvas.addEventListener('mouseleave', () => { isDrawing = false; });
-        
-        function applyTool(e) {
-            const rect = canvas.getBoundingClientRect();
-            const x = Math.floor((e.clientX - rect.left) / pixelSize);
-            const y = Math.floor((e.clientY - rect.top) / pixelSize);
-            
-            for (let dy = -brushSize; dy <= brushSize; dy++) {
-                for (let dx = -brushSize; dx <= brushSize; dx++) {
-                    if (Math.sqrt(dx * dx + dy * dy) <= brushSize) {
-                        const px = x + dx; const py = y + dy;
-                        if (px >= 0 && px < width && py >= 0 && py < height) {
-                            if (isErasing) {
-                                grid[py][px] = null; // BORRAR
-                            } else if (!grid[py][px]) {
-                                grid[py][px] = { type: selectedMaterial };
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        
-        // ===================== LOOP PRINCIPAL =====================
-        let frameCount = 0;
-        function update() {
-            if (!isPaused) {
-                frameCount++;
-                const startX = frameCount % 2 === 0 ? 0 : width - 1;
-                const endX = startX === 0 ? width : -1;
-                const stepX = startX === 0 ? 1 : -1;
-                for (let y = height - 1; y >= 0; y--) {
-                    for (let x = startX; x !== endX; x += stepX) {
-                        if (grid[y][x]) updateParticle(x, y);
-                    }
-                }
-            }
-            render();
-            requestAnimationFrame(update);
-        }
-        
-        function render() {
-            ctx.fillStyle = '#000000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            for (let y = 0; y < height; y++) {
-                for (let x = 0; x < width; x++) {
-                    const particle = grid[y][x];
-                    if (particle) {
-                        const mat = MATERIALS[particle.type];
-                        if (mat) {
-                            if (particle.color) {
-                                ctx.fillStyle = particle.color;
-                            } else if (particle.type === 'lava') {
-                                const p = Math.sin(Date.now() / 200) * 0.2 + 0.8;
-                                ctx.fillStyle = `rgb(${Math.floor(255*p)},${Math.floor(69*p)},0)`;
-                            } else if (particle.type === 'magma') {
-                                const p = Math.sin(Date.now() / 150) * 0.3 + 0.7;
-                                ctx.fillStyle = `rgb(${Math.floor(255*p)},${Math.floor(102*p)},0)`;
-                            } else if (particle.type === 'plasma') {
-                                const p = Math.sin(Date.now() / 100) * 0.5 + 0.5;
-                                ctx.fillStyle = `rgb(${Math.floor(255*p)},0,${Math.floor(255*(1-p))})`;
-                            } else if (particle.type === 'portal') {
-                                const p = Math.sin(Date.now() / 100) * 0.3 + 0.7;
-                                ctx.fillStyle = `rgb(${Math.floor(139*p)},0,${Math.floor(255*p)})`;
-                            } else if (particle.type === 'uranium') {
-                                const p = Math.sin(Date.now() / 300) * 0.3 + 0.7;
-                                ctx.fillStyle = `rgb(0,${Math.floor(255*p)},0)`;
-                            } else {
-                                ctx.fillStyle = mat.color;
-                            }
-                            ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
-                        }
-                    }
-                }
-            }
-        }
-        
-        initUI();
-        update();
-    </script>
+    }
+}
+
+function render(){
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    for(let y=0;y<height;y++) for(let x=0;x<width;x++){
+        const p=grid[y][x]; if(!p) continue;
+        ctx.fillStyle = p.color || MATERIALS[p.type].color;
+        ctx.fillRect(x*pixelSize,y*pixelSize,pixelSize,pixelSize);
+    }
+}
+
+function update(){
+    if(!isPaused){
+        for(let y=height-1;y>=0;y--) for(let x=0;x<width;x++) updateParticle(x,y);
+    }
+    render();
+    requestAnimationFrame(update);
+}
+
+initUI();
+update();
+</script>
 </body>
 </html>
